@@ -87,57 +87,126 @@ RETURN NEW;
 END $$
 LANGUAGE 'plpgsql';
 
-
 CREATE TRIGGER TR_GR02_RECOMENDACION_VOTO
-BEFORE UPDATE OF id_usuario,id_juego
+BEFORE INSERT OR UPDATE OF id_usuario,id_juego
 ON GR02_RECOMENDACION
 FOR EACH ROW
 EXECUTE PROCEDURE TRFN_GR02_RECOMENDACION_VOTO();
 
-/*
-CREATE OR REPLACE FUNCTION TRFN_GR02_RECOMENDACION_VOTO()
+
+CREATE OR REPLACE FUNCTION TRFN_GR02_VOTO_RECOMENDACION()
 RETURNS Trigger AS $$
 declare
 BEGIN
-IF NOT EXISTS(SELECT id_usuario,id_juego
-FROM GR02_VOTO
-WHERE id_usuario= NEW.id_usuario AND id_juego= NEW.id_juego)
-THEN
-RAISE EXCEPTION 'Error no puede recomendar un juego que no ha votado';
+IF (TG_OP='UPDATE')THEN
+    RAISE EXCEPTION 'Error no puede modificar un voto';
 END IF;
-RETURN NEW;
+IF (TG_OP='DELETE') THEN
+    RAISE EXCEPTION 'Error no puede eliminar un voto';
+END IF;
 END $$
 LANGUAGE 'plpgsql';
 
 
 CREATE TRIGGER TR_GR02_VOTO_RECOMENDACION
-BEFORE UPDATE OF id_usuario,id_juego
+BEFORE UPDATE OF id_usuario,id_juego, valor_voto OR DELETE
 ON GR02_VOTO
 FOR EACH ROW
 EXECUTE PROCEDURE TRFN_GR02_VOTO_RECOMENDACION();
 
- */
+--PROCEDE
+--INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(1, 'elianacaballeri31@gmail.com',1,23);
+--INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,97);
+--INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,12); INSERTADO PARA EL EJEMPLO DE INSERT FALLA
+--INSERT INTO GR02_VOTO(ID_VOTO,VALOR_VOTO,ID_USUARIO,ID_JUEGO) VALUES (281,5,100,97);
+--INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(2, 'elianacaballeri31@gmail.com',100,97);
+--UPDATE gr02_recomendacion SET id_usuario=100,id_juego=26 WHERE id_usuario=100 AND id_juego=97;
 
-INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(1, 'elianacaballeri31@gmail.com',1,23);
-INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(2, 'elianacaballeri31@gmail.com',100,97);
-INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,97);
-
+--FALLA POR RESTRICCION DE TRIGGERS
+--UPDATE gr02_voto SET valor_voto=7 WHERE id_usuario=100 AND id_juego=26;
+--DELETE FROM gr02_voto WHERE id_usuario=98 AND id_juego=43;
+--INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES (3,'PAUCASADO@GMIL',100,12);
 
 
 --d)Un usuario no puede comentar un juego que no ha jugado.
 --TIPO GENERAL
-CREATE ASSERTION USUARIO_NO_COMENTA_JUEGO
+/*CREATE ASSERTION USUARIO_NO_COMENTA_JUEGO
 CHECK(NOT EXISTS(SELECT 1
 FROM GR02_COMENTA
 WHERE (id_usuario, id_juego) IN (SELECT ID_USUARIO,ID_JUEGO
                                    FROM GR02_JUEGA )
 
 ));
+*/
+CREATE OR REPLACE FUNCTION TRFN_GR02_COMENTA_FIJA_JUEGA()
+RETURNS Trigger AS $$
+declare
+BEGIN
+IF NOT EXISTS(SELECT id_usuario,id_juego
+    FROM GR02_JUEGA
+    WHERE id_usuario= NEW.id_usuario AND id_juego= NEW.id_juego)
+THEN
+RAISE EXCEPTION 'Error no puede comentar un juego que no ha jugado';
+END IF;
+RETURN NEW;
+END $$
+LANGUAGE 'plpgsql';
 
 
+CREATE TRIGGER TR_GR02_COMENTA_JUEGA
+BEFORE INSERT OR UPDATE OF id_usuario, id_juego
+ON GR02_COMENTA
+FOR EACH ROW
+EXECUTE PROCEDURE TRFN_GR02_COMENTA_FIJA_JUEGA();
+
+CREATE OR REPLACE FUNCTION TRFN_GR02_JUEGA_COMENTA_ESTADOCONSISTENTE()
+RETURNS Trigger AS $$
+declare
+BEGIN
+IF(TG_OP='UPDATE') THEN
+    UPDATE GR02_COMENTA SET id_usuario = new.id_usuario, id_juego = new.id_juego
+            WHERE id_usuario = old.id_usuario AND id_juego = old.id_juego;
+    RETURN NEW;
+END IF;
+IF(TG_OP='DELETE') THEN
+    DELETE FROM GR02_COMENTA WHERE id_usuario = old.id_usuario AND id_juego = old.id_juego;
+    RETURN OLD;
+END IF;
+
+END $$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER TR_GR02_JUEGA_COMENTA
+AFTER UPDATE OF id_usuario, id_juego OR DELETE
+ON GR02_JUEGA
+FOR EACH ROW
+EXECUTE PROCEDURE TRFN_GR02_JUEGA_COMENTA_ESTADOCONSISTENTE();
+
+--PROCEDEN
+--INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-11-27','2020-11-28');
+--INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (6,96,'2020-11-27','2020-12-27');
+--INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-11-27','2020-12-27');
+--INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,22);
+--INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,22,'2020-10-27','2020-12-27');
+--UPDATE gr02_comenta SET id_juego=23 WHERE id_usuario=1 AND id_juego=74;
+--UPDATE GR02_JUEGA SET id_juego=23 WHERE id_usuario=100 AND id_juego=56;
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (1,23,1,'2020-11-28','prueba 1');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (1,74,2,'2020-11-28','prueba 2');
+--DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
 
 
+--INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,23,'2020-10-27','2020-12-27');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (100,23,4,'2020-11-28','prueba 3');
+--INSERT INTO gr02_juego (id_juego, nombre_juego, descripcion_juego, id_categoria) VALUES (101,'MORTAL','EL MEJOR',5);
 
+UPDATE GR02_JUEGA SET id_juego=101 WHERE id_usuario=100 AND id_juego=23;
+DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
+
+
+--FALLA
+--UPDATE GR02_JUEGA SET id_juego=56 WHERE id_usuario=160 AND id_juego=23; NO HACE NADA PORQUE NO ESE JUGADOR NO JUEGA ESE JUEGO
+--INSERT INTO gr02_comenta(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,76,'2020-05-23','2020-07-25');
+--UPDATE gr02_comenta SET id_juego=17 WHERE id_usuario=1 AND id_juego=23;
 
 
 
