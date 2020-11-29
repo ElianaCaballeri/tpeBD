@@ -201,7 +201,7 @@ EXECUTE PROCEDURE TRFN_GR02_JUEGA_COMENTA_ESTADOCONSISTENTE();
 
 UPDATE GR02_JUEGA SET id_juego=101 WHERE id_usuario=100 AND id_juego=23;
 DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
-
+--PROBAR PORQUE NO ANDA?
 
 --FALLA
 --UPDATE GR02_JUEGA SET id_juego=56 WHERE id_usuario=160 AND id_juego=23; NO HACE NADA PORQUE NO ESE JUGADOR NO JUEGA ESE JUEGO
@@ -209,8 +209,41 @@ DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
 --UPDATE gr02_comenta SET id_juego=17 WHERE id_usuario=1 AND id_juego=23;
 
 
+--C) 1- Se debe mantener sincronizadas las tablas COMENTA y COMENTARIO en los siguientes aspectos:
+CREATE OR REPLACE FUNCTION FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO()
+RETURNS Trigger AS
+$$
+    declare cantidadComentarios integer;
+    BEGIN
+        SELECT COUNT(*) INTO cantidadComentarios
+        FROM gr02_comentario
+        WHERE id_usuario=NEW.id_usuario AND id_juego=NEW.id_juego;
 
+        IF (cantidadComentarios < 1)THEN
+            INSERT INTO GR02_COMENTARIO (id_usuario,id_juego,id_comentario,fecha_comentario,comentario)
+                values (NEW.id_usuario, NEW.id_juego, NEW.id_comentario, NEW.fecha_comentario, NEW.comentario);
+            INSERT INTO GR02_COMENTA (id_usuario,id_juego, fecha_primer_com, fecha_ultimo_com)
+                values (NEW.id_usuario, NEW.id_juego, NEW.fecha_comentario, NULL);
+        END IF;
+        IF (cantidadComentarios >= 1)THEN
+            INSERT INTO GR02_COMENTARIO (id_usuario,id_juego,id_comentario,fecha_comentario,comentario)
+                values (NEW.id_usuario, NEW.id_juego, NEW.id_comentario, NEW.fecha_comentario, NEW.comentario);
+            INSERT INTO GR02_COMENTA (id_usuario,id_juego, fecha_primer_com, fecha_ultimo_com)
+                values (NEW.id_usuario, NEW.id_juego, fecha_comentario, NEW.fecha_comentario);
+        END IF;
 
+        RETURN NEW;
+    END;
+$$
+LANGUAGE 'plpgsql';
 
+CREATE TRIGGER TR_GR02_SINCRONIZACION_COMENTA_COMENTARIO
+BEFORE INSERT
+ON GR02_COMENTARIO
+FOR EACH ROW
+EXECUTE PROCEDURE FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO();
 
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
 
