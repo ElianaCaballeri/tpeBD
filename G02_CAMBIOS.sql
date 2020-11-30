@@ -175,7 +175,7 @@ END $$
 LANGUAGE 'plpgsql';
 
 CREATE TRIGGER TR_GR02_JUEGA_COMENTA
-AFTER UPDATE OF id_usuario, id_juego OR DELETE
+AFTER DELETE or UPDATE OF id_usuario, id_juego
 ON GR02_JUEGA
 FOR EACH ROW
 EXECUTE PROCEDURE TRFN_GR02_JUEGA_COMENTA_ESTADOCONSISTENTE();
@@ -183,29 +183,23 @@ EXECUTE PROCEDURE TRFN_GR02_JUEGA_COMENTA_ESTADOCONSISTENTE();
 --PROCEDEN
 --INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-11-27','2020-11-28');
 --INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (6,96,'2020-11-27','2020-12-27');
---INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-11-27','2020-12-27');
 --INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,22);
 --INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,22,'2020-10-27','2020-12-27');
---UPDATE gr02_comenta SET id_juego=23 WHERE id_usuario=1 AND id_juego=74;
---UPDATE GR02_JUEGA SET id_juego=23 WHERE id_usuario=100 AND id_juego=56;
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (1,23,1,'2020-11-28','prueba 1');
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (1,74,2,'2020-11-28','prueba 2');
---DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
-
-
-INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,23,'2020-10-27',null);
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (100,23,10,'2021-11-27','prueba 3');
 --INSERT INTO gr02_juego (id_juego, nombre_juego, descripcion_juego, id_categoria) VALUES (101,'MORTAL','EL MEJOR',5);
+--UPDATE GR02_JUEGA SET id_juego=101 WHERE id_usuario=100 AND id_juego=22;
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (2,17,2,'2020-11-28','prueba 2');
+--INSERT INTO GR02_USUARIO(id_usuario, apellido, nombre, email, id_tipo_usuario, password) VALUES(101,'Rodriguez','German','rorro14@gmail.com',20,'LO-MAS')
+--INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,101,101);
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (101,101,15,'2020-11-28','prueba 200002');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (101,101,16,'2020-11-30','prueba 200002');
+--UPDATE gr02_juega SET id_juego=74 WHERE id_usuario=101 AND id_juego=101;
+--DELETE FROM gr02_juega WHERE ID_USUARIO=101 AND ID_JUEGO=74;
 
-UPDATE GR02_JUEGA SET id_usuario=100, id_juego=101 WHERE id_usuario=100 AND id_juego=23;
-DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
-
---PROBAR PORQUE NO ANDA?
 
 --FALLA
 --UPDATE GR02_JUEGA SET id_juego=56 WHERE id_usuario=160 AND id_juego=23; NO HACE NADA PORQUE NO ESE JUGADOR NO JUEGA ESE JUEGO
---INSERT INTO gr02_comenta(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,76,'2020-05-23','2020-07-25');
---UPDATE gr02_comenta SET id_juego=17 WHERE id_usuario=1 AND id_juego=23;
+--INSERT INTO gr02_comenta(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-05-23','2020-07-25'); VIOLA LA FK EN COMENTA
+--UPDATE gr02_comenta SET id_juego=19 WHERE id_usuario=2 AND id_juego=17; NO HA JUGADO
 
 
 --C) 1- Se debe mantener sincronizadas las tablas COMENTA y COMENTARIO en los siguientes aspectos:
@@ -253,11 +247,11 @@ ON GR02_COMENTARIO
 FOR EACH ROW
 EXECUTE PROCEDURE FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO();
 
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
-UPDATE gr02_comentario set fecha_comentario='2021-1-1-' where id_usuario=90 and id_juego=58 and id_comentario=7;
-DELETE from gr02_comenta where id_usuario=90 and id_juego=58
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
+--UPDATE gr02_comentario set fecha_comentario='2021-1-1-' where id_usuario=90 and id_juego=58 and id_comentario=7;
+--DELETE from gr02_comenta where id_usuario=90 and id_juego=58
 
 
 
