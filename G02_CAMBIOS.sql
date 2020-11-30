@@ -218,11 +218,11 @@ $$
         ultimafecha timestamp;
         cantidad_comentarios INTEGER;
     BEGIN
-        SELECT fecha_comentario INTO fechadelcomentario
+        SELECT fecha_comentario into fechadelcomentario
         FROM gr02_comentario
         WHERE id_usuario=NEW.id_usuario AND id_juego=NEW.id_juego;
 
-        SELECT fecha_primer_com INTO primerfecha
+        SELECT fecha_primer_com  INTO primerfecha
         FROM GR02_COMENTA
         WHERE id_usuario=NEW.id_usuario AND id_juego=NEW.id_juego;
 
@@ -237,10 +237,9 @@ $$
         IF (cantidad_comentarios<1)THEN
             INSERT INTO GR02_COMENTA (id_usuario,id_juego, fecha_primer_com, fecha_ultimo_com)
                 values (NEW.id_usuario, NEW.id_juego, NEW.fecha_comentario, NULL);
+        ELSE IF ((ultimafecha is null) or (ultimafecha is not null)) THEN
+            UPDATE GR02_COMENTA SET fecha_ultimo_com=NEW.fecha_comentario WHERE id_usuario=new.id_usuario AND id_juego=new.id_juego;
         END IF;
-
-        IF ((fechadelcomentario > ultimafecha AND cantidad_comentarios >=1) OR ultimafecha IS NULL )THEN
-            UPDATE GR02_COMENTA SET fecha_ultimo_com=NEW.fecha_comentario WHERE id_usuario=OLD.id_usuario AND id_juego=OLD.id_juego;
         END IF;
 RETURN NEW;
 END
@@ -254,12 +253,12 @@ ON GR02_COMENTARIO
 FOR EACH ROW
 EXECUTE PROCEDURE FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO();
 
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
+UPDATE gr02_comentario set fecha_comentario='2021-1-1-' where id_usuario=90 and id_juego=58 and id_comentario=7;
+DELETE from gr02_comenta where id_usuario=90 and id_juego=58
 
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,8,'2021-11-30','aleluyaaaa');
 
 
---NO CAMBIA LA FECHA DE ULTIMO COMENTARIO POR LA NUEVA QUE ES MAYOR
-delete from gr02_comentario where id_usuario=90 and id_juego=58 and id_comentario=8
+
