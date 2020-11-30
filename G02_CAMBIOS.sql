@@ -164,15 +164,13 @@ RETURNS Trigger AS $$
 declare
 BEGIN
 IF(TG_OP='UPDATE') THEN
-    UPDATE GR02_COMENTA SET id_usuario = new.id_usuario, id_juego = new.id_juego
-            WHERE id_usuario = old.id_usuario AND id_juego = old.id_juego;
+    UPDATE gr02_comenta SET id_usuario = NEW.id_usuario , id_juego = NEW.id_juego WHERE id_usuario = old.id_usuario AND id_juego = old.id_juego;
     RETURN NEW;
 END IF;
 IF(TG_OP='DELETE') THEN
-    DELETE FROM GR02_COMENTA WHERE id_usuario = old.id_usuario AND id_juego = old.id_juego;
+    DELETE FROM gr02_comenta WHERE id_usuario = old.id_usuario AND id_juego = old.id_juego;
     RETURN OLD;
 END IF;
-
 END $$
 LANGUAGE 'plpgsql';
 
@@ -195,12 +193,13 @@ EXECUTE PROCEDURE TRFN_GR02_JUEGA_COMENTA_ESTADOCONSISTENTE();
 --DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
 
 
---INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,23,'2020-10-27','2020-12-27');
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (100,23,4,'2020-11-28','prueba 3');
+INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,23,'2020-10-27',null);
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (100,23,10,'2021-11-27','prueba 3');
 --INSERT INTO gr02_juego (id_juego, nombre_juego, descripcion_juego, id_categoria) VALUES (101,'MORTAL','EL MEJOR',5);
 
-UPDATE GR02_JUEGA SET id_juego=101 WHERE id_usuario=100 AND id_juego=23;
+UPDATE GR02_JUEGA SET id_usuario=100, id_juego=101 WHERE id_usuario=100 AND id_juego=23;
 DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
+
 --PROBAR PORQUE NO ANDA?
 
 --FALLA
@@ -213,37 +212,54 @@ DELETE FROM gr02_juega WHERE ID_USUARIO=100 AND ID_JUEGO=23;
 CREATE OR REPLACE FUNCTION FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO()
 RETURNS Trigger AS
 $$
-    declare cantidadComentarios integer;
+    DECLARE
+        fechadelcomentario timestamp;
+        primerfecha timestamp;
+        ultimafecha timestamp;
+        cantidad_comentarios INTEGER;
     BEGIN
-        SELECT COUNT(*) INTO cantidadComentarios
+        SELECT fecha_comentario INTO fechadelcomentario
         FROM gr02_comentario
         WHERE id_usuario=NEW.id_usuario AND id_juego=NEW.id_juego;
 
-        IF (cantidadComentarios < 1)THEN
-            INSERT INTO GR02_COMENTARIO (id_usuario,id_juego,id_comentario,fecha_comentario,comentario)
-                values (NEW.id_usuario, NEW.id_juego, NEW.id_comentario, NEW.fecha_comentario, NEW.comentario);
+        SELECT fecha_primer_com INTO primerfecha
+        FROM GR02_COMENTA
+        WHERE id_usuario=NEW.id_usuario AND id_juego=NEW.id_juego;
+
+        SELECT fecha_ultimo_com INTO ultimafecha
+        FROM GR02_COMENTA
+        WHERE id_usuario=NEW.id_usuario AND id_juego=NEW.id_juego;
+
+        SELECT COUNT(*) INTO cantidad_comentarios
+        FROM gr02_comentario
+        WHERE id_usuario=NEW.id_usuario AND id_juego=NEW.id_juego;
+
+        IF (cantidad_comentarios<1)THEN
             INSERT INTO GR02_COMENTA (id_usuario,id_juego, fecha_primer_com, fecha_ultimo_com)
                 values (NEW.id_usuario, NEW.id_juego, NEW.fecha_comentario, NULL);
         END IF;
-        IF (cantidadComentarios >= 1)THEN
-            INSERT INTO GR02_COMENTARIO (id_usuario,id_juego,id_comentario,fecha_comentario,comentario)
-                values (NEW.id_usuario, NEW.id_juego, NEW.id_comentario, NEW.fecha_comentario, NEW.comentario);
-            INSERT INTO GR02_COMENTA (id_usuario,id_juego, fecha_primer_com, fecha_ultimo_com)
-                values (NEW.id_usuario, NEW.id_juego, fecha_comentario, NEW.fecha_comentario);
-        END IF;
 
-        RETURN NEW;
-    END;
+        IF ((fechadelcomentario > ultimafecha AND cantidad_comentarios >=1) OR ultimafecha IS NULL )THEN
+            UPDATE GR02_COMENTA SET fecha_ultimo_com=NEW.fecha_comentario WHERE id_usuario=OLD.id_usuario AND id_juego=OLD.id_juego;
+        END IF;
+RETURN NEW;
+END
 $$
 LANGUAGE 'plpgsql';
 
+
 CREATE TRIGGER TR_GR02_SINCRONIZACION_COMENTA_COMENTARIO
-BEFORE INSERT
+BEFORE INSERT OR UPDATE OF fecha_comentario
 ON GR02_COMENTARIO
 FOR EACH ROW
 EXECUTE PROCEDURE FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO();
 
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
-INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
+--INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
 
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,8,'2021-11-30','aleluyaaaa');
+
+
+--NO CAMBIA LA FECHA DE ULTIMO COMENTARIO POR LA NUEVA QUE ES MAYOR
+delete from gr02_comentario where id_usuario=90 and id_juego=58 and id_comentario=8
