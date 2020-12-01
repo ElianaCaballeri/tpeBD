@@ -255,37 +255,33 @@ EXECUTE PROCEDURE FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO();
 
 --C) 2- Dado un patrón de búsqueda devolver todos los datos de el o los usuarios
 -- junto con la cantidad de juegos que ha jugado y la cantidad de votos que ha realizado.
-
-CREATE TABLE GR02_PATRON_BUSQUEDA_USUARIOS(
-    id_usuario int  NOT NULL,
-    apellido varchar(50)  NOT NULL,
-    nombre varchar(50)  NOT NULL,
-    email varchar(30)  NOT NULL,
-    id_tipo_usuario int  NOT NULL,
-    password varchar(32)  NOT NULL,
-    cantidad_votos int NOT NULL,
-    cantidad_juegos_jugados int NOT NULL,
-    CONSTRAINT PK_GR02_USUARIO PRIMARY KEY (id_usuario)
-);
-
 create or replace function FN_GR02_PATRON_BUSQUEDA (Nro_usuario int)
-   returns GR02_PATRON_BUSQUEDA_USUARIOS as
+RETURNS TABLE ( id_usuario int,
+                apellido varchar(50),
+                nombre varchar(50),
+                email varchar(30),
+                id_tipo_usuario int,
+                password varchar(32),
+                cantidad_votos bigint,
+                cantidad_juegos_jugados bigint
+ ) AS
 $$
-declare
-    cant_votos integer;
-    cant_juegos integer;
-begin
-
-
-       RETURN QUERY SELECT u.id_usuario,u.apellido,u.nombre,u.email,u.id_tipo_usuario,u.password, COUNT(*) INTO cant_votos,COUNT(*) INTO cant_juegos
-            FROM gr02_usuario u JOIN gr02_voto g02v on (u.id_usuario = g02v.id_usuario)
-                                JOIN gr02_juega g02j on (u.id_usuario = g02j.id_usuario)
-            WHERE u.id_usuario = Nro_usuario;
-end;
+BEGIN
+       RETURN QUERY
+       SELECT *,
+          (SELECT count(*)
+           FROM gr02_juega j
+           WHERE u.id_usuario = j.id_usuario) as cantidad_juegos_jugados,
+          (SELECT count(*)
+           FROM gr02_voto v
+           WHERE u.id_usuario = v.id_usuario) as cantidad_voto
+       FROM gr02_usuario u
+       WHERE Nro_usuario=u.id_usuario;
+END;
 $$
-language 'plpgsql';
+LANGUAGE 'plpgsql';
 
-select FN_GR02_PATRON_BUSQUEDA(13);
+select * FROM FN_GR02_PATRON_BUSQUEDA(13);
 
 
 --D. DEFINICIÓN DE VISTAS
@@ -344,6 +340,6 @@ CREATE VIEW GR02_LOS_10_JUEGOS_MAS_JUGADOS AS
 SELECT id_juego, COUNT(id_usuario) as cantidaddejugadores
 FROM gr02_juega
 GROUP BY id_juego
-ORDER BY COUNT(id_juego) DESC
+ORDER BY COUNT(id_usuario) DESC
 LIMIT 10;
 
