@@ -1,25 +1,27 @@
---La fecha del primer comentario tiene que
---ser anterior a la fecha del último comentario si este no es nulo.
+--B) a) La fecha del primer comentario tiene que  ser anterior a la fecha del último comentario si este no es nulo.
 --TIPO TUPLA
 ALTER TABLE GR02_COMENTA
 ADD CONSTRAINT CK_GR02_FECHA_COMENTARIO
 CHECK((fecha_ultimo_com IS NOT NULL AND fecha_primer_com<fecha_ultimo_com)OR (fecha_ultimo_com IS NULL)) ;
 
 --SE EJECUTA CORRECTAMENTE
---INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(1,1,'2018-05-18','2020-06-20');
---INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,1,'2018-06-25','2019-03-14');
---INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,2,'2018-05-18','2020-11-23');
---INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,3,'2018-05-18',NULL);
---NO PROCEDE
---INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,2,'2020-05-18','2010-04-17');
-
---NO PROCEDE POR QUE LA FECHA A CAMBIAR NO CUMPLE CON EL CHECKEO
---UPDATE GR02_COMENTA SET fecha_primer_com='2020-11-19' WHERE id_usuario=2 AND id_juego=1;
+/*
+INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(1,1,'2018-05-18','2020-06-20');
+INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,1,'2018-06-25','2019-03-14');
+INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,2,'2018-05-18','2020-11-23');
+INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,3,'2018-05-18',NULL);
+*/
 --PROCEDE YA QUE LA FECHA DE INICIO CUMPLE CON EL CHECKEO
 --UPDATE GR02_COMENTA SET fecha_primer_com='2017-11-19' WHERE id_usuario=2 AND id_juego=1;
 
+--NO PROCEDE INSERT
+--INSERT INTO GR02_COMENTA(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES(2,4,'2020-05-18','2010-04-17');
+--NO PROCEDE UPDATE POR QUE LA FECHA A CAMBIAR NO CUMPLE CON EL CHECKEO
+--UPDATE GR02_COMENTA SET fecha_primer_com='2020-11-19' WHERE id_usuario=2 AND id_juego=1;
 
---Cada usuario sólo puede comentar una vez al día cada juego.
+
+
+--B) b) Cada usuario sólo puede comentar una vez al día cada juego.
 --TIPO TABLA
 /*ALTER TABLE GR02_COMENTARIO
 ADD CONSTRAINT CK_GR02_CANT_COMENTARIO_X_DIA
@@ -50,17 +52,20 @@ ON GR02_COMENTARIO
 FOR EACH ROW
 EXECUTE PROCEDURE TRFN_GR02_fecha_comentario();
 
-
+/*
 --los insert son a prueba para demostrar que funciona la consulta interna del chequeo.
---INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,1,1,now(),'muy buen juego federico');
---INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,1,2,now(),'muy buen juego federico2');
---INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,1,3,now(),'muy buen juego federico3');
---INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(1,1,3,'2020-11-23','muy buen juego');
---INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,2,4,'2020-11-24','PRUEBA');
---INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,2,5,'2020-11-23','PRUEBAAAA2');
+--procede
 
---UPDATE GR02_COMENTARIO SET id_juego=1 WHERE id_usuario=2 AND id_juego=2 AND id_comentario=4;
---UPDATE GR02_COMENTARIO SET id_juego=1 ,id_usuario=1 WHERE id_juego=2 AND id_usuario=2 AND id_comentario=4;
+INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,4,1,now(),'muy buen juego federico');
+INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(1,2,7,'2020-11-23','muy buen juego');
+INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,5,4,'2020-11-24','PRUEBA');
+INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,6,5,'2020-11-23','PRUEBAAAA2');
+
+UPDATE GR02_COMENTARIO SET id_juego=1 WHERE id_usuario=2 AND id_juego=6 AND id_comentario=5;
+*/
+--falla por que no puede hacer mas de 1 comentario por dia
+--INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,4,2,now(),'muy buen juego federico2');
+--INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,4,3,now(),'muy buen juego federico3');
 
 
 --c)Un usuario no puede recomendar un juego si no ha votado previamente dicho juego.
@@ -114,19 +119,22 @@ ON GR02_VOTO
 FOR EACH ROW
 EXECUTE PROCEDURE TRFN_GR02_VOTO_RECOMENDACION();
 
+/*
 --PROCEDE
---INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(1, 'elianacaballeri31@gmail.com',1,23);
---INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,97);
---INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,12); INSERTADO PARA EL EJEMPLO DE INSERT FALLA
---INSERT INTO GR02_VOTO(ID_VOTO,VALOR_VOTO,ID_USUARIO,ID_JUEGO) VALUES (281,5,100,97);
---INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(2, 'elianacaballeri31@gmail.com',100,97);
---UPDATE gr02_recomendacion SET id_usuario=100,id_juego=26 WHERE id_usuario=100 AND id_juego=97;
+INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(1, 'elianacaballeri31@gmail.com',1,23);
+INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,97);
+INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,12); --INSERTADO PARA EL EJEMPLO DE INSERT
+INSERT INTO GR02_VOTO(ID_VOTO,VALOR_VOTO,ID_USUARIO,ID_JUEGO) VALUES (281,5,100,97);
+INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES(2, 'elianacaballeri31@gmail.com',100,97);
+UPDATE gr02_recomendacion SET id_usuario=100,id_juego=26 WHERE id_usuario=100 AND id_juego=97;
+
+*/
 
 --FALLA POR RESTRICCION DE TRIGGERS
---UPDATE gr02_voto SET valor_voto=7 WHERE id_usuario=100 AND id_juego=26;
---DELETE FROM gr02_voto WHERE id_usuario=98 AND id_juego=43;
---INSERT INTO GR02_RECOMENDACION (ID_RECOMENDACION, EMAIL_RECOMENDADO, ID_USUARIO, ID_JUEGO) VALUES (3,'PAUCASADO@GMIL',100,12);
-
+/*
+UPDATE gr02_voto SET valor_voto=7 WHERE id_usuario=100 AND id_juego=26;
+DELETE FROM gr02_voto WHERE id_usuario=98 AND id_juego=43;
+*/
 
 --d)Un usuario no puede comentar un juego que no ha jugado.
 --TIPO GENERAL
@@ -181,25 +189,25 @@ FOR EACH ROW
 EXECUTE PROCEDURE TRFN_GR02_JUEGA_COMENTA_ESTADOCONSISTENTE();
 
 --PROCEDEN
---INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-11-27','2020-11-28');
---INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (6,96,'2020-11-27','2020-12-27');
---INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,22);
---INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,22,'2020-10-27','2020-12-27');
---INSERT INTO gr02_juego (id_juego, nombre_juego, descripcion_juego, id_categoria) VALUES (101,'MORTAL','EL MEJOR',5);
---UPDATE GR02_JUEGA SET id_juego=101 WHERE id_usuario=100 AND id_juego=22;
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (2,17,2,'2020-11-28','prueba 2');
---INSERT INTO GR02_USUARIO(id_usuario, apellido, nombre, email, id_tipo_usuario, password) VALUES(101,'Rodriguez','German','rorro14@gmail.com',20,'LO-MAS')
---INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,101,101);
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (101,101,15,'2020-11-28','prueba 200002');
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (101,101,16,'2020-11-30','prueba 200002');
---UPDATE gr02_juega SET id_juego=74 WHERE id_usuario=101 AND id_juego=101;
---DELETE FROM gr02_juega WHERE ID_USUARIO=101 AND ID_JUEGO=74;
-
+/*
+INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-11-27','2020-11-28');
+INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (6,96,'2020-11-27','2020-12-27');
+INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,100,22);
+INSERT INTO gr02_comenta (id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (100,22,'2020-10-27','2020-12-27');
+INSERT INTO gr02_juego (id_juego, nombre_juego, descripcion_juego, id_categoria) VALUES (101,'MORTAL','EL MEJOR',5);
+UPDATE GR02_JUEGA SET id_juego=101 WHERE id_usuario=100 AND id_juego=22;
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (2,17,2,'2020-11-28','prueba 2');
+INSERT INTO GR02_USUARIO(id_usuario, apellido, nombre, email, id_tipo_usuario, password) VALUES(101,'Rodriguez','German','rorro14@gmail.com',20,'LO-MAS')
+INSERT INTO GR02_JUEGA(finalizado, id_usuario, id_juego) VALUES(null,101,101);
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (101,101,15,'2020-11-28','prueba 200002');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (101,101,16,'2020-11-30','prueba 200002');
+UPDATE gr02_juega SET id_juego=74 WHERE id_usuario=101 AND id_juego=101;
+DELETE FROM gr02_juega WHERE ID_USUARIO=101 AND ID_JUEGO=74;
+*/
 
 --FALLA
---UPDATE GR02_JUEGA SET id_juego=56 WHERE id_usuario=160 AND id_juego=23; NO HACE NADA PORQUE NO ESE JUGADOR NO JUEGA ESE JUEGO
---INSERT INTO gr02_comenta(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-05-23','2020-07-25'); VIOLA LA FK EN COMENTA
---UPDATE gr02_comenta SET id_juego=19 WHERE id_usuario=2 AND id_juego=17; NO HA JUGADO
+--INSERT INTO gr02_comenta(id_usuario, id_juego, fecha_primer_com, fecha_ultimo_com) VALUES (1,74,'2020-05-23','2020-07-25');-- VIOLA LA FK EN COMENTA
+--UPDATE gr02_comenta SET id_juego=19 WHERE id_usuario=2 AND id_juego=17; --NO HA JUGADO
 
 
 --C) 1- Se debe mantener sincronizadas las tablas COMENTA y COMENTARIO en los siguientes aspectos:
@@ -246,13 +254,13 @@ BEFORE INSERT OR UPDATE OF fecha_comentario
 ON GR02_COMENTARIO
 FOR EACH ROW
 EXECUTE PROCEDURE FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO();
-
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
---INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
---UPDATE gr02_comentario set fecha_comentario='2021-1-1-' where id_usuario=90 and id_juego=58 and id_comentario=7;
---DELETE from gr02_comenta where id_usuario=90 and id_juego=58
-
+/*
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (35,13,5,'2020-11-29','Esperancito');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,6,'2020-11-30','Dia de ñoquis');
+INSERT INTO gr02_comentario (id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES (90,58,7,'2020-12-31','Dia de ñoquis pasados');
+UPDATE gr02_comentario set fecha_comentario='2021-1-1-' where id_usuario=90 and id_juego=58 and id_comentario=7;
+DELETE from gr02_comenta where id_usuario=90 and id_juego=58;
+*/
 --C) 2- Dado un patrón de búsqueda devolver todos los datos de el o los usuarios
 -- junto con la cantidad de juegos que ha jugado y la cantidad de votos que ha realizado.
 create or replace function FN_GR02_PATRON_BUSQUEDA (Nro_usuario int)
@@ -304,7 +312,7 @@ WHERE (fecha_comentario >= NOW() - interval '1 month')
         )
     )
 );
-
+--INSERT INTO GR02_COMENTARIO(id_usuario, id_juego, id_comentario, fecha_comentario, comentario) VALUES(2,76,8,'2018-02-07', 'comentario viejo');
 --2. USUARIOS_COMENTADORES: Listar aquellos usuarios que han comentado TODOS los juegos durante el último año,
 -- teniendo en cuenta que sólo pueden comentar aquellos juegos que han jugado.
 
