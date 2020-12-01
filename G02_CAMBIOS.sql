@@ -253,6 +253,36 @@ EXECUTE PROCEDURE FN_GR02_SINCRONIZACION_COMENTA_COMENTARIO();
 --UPDATE gr02_comentario set fecha_comentario='2021-1-1-' where id_usuario=90 and id_juego=58 and id_comentario=7;
 --DELETE from gr02_comenta where id_usuario=90 and id_juego=58
 
+--C) 2- Dado un patrón de búsqueda devolver todos los datos de el o los usuarios
+-- junto con la cantidad de juegos que ha jugado y la cantidad de votos que ha realizado.
+
+CREATE TABLE GR02_PATRON_BUSQUEDA_USUARIOS(
+    id_usuario int  NOT NULL,
+    apellido varchar(50)  NOT NULL,
+    nombre varchar(50)  NOT NULL,
+    email varchar(30)  NOT NULL,
+    id_tipo_usuario int  NOT NULL,
+    password varchar(32)  NOT NULL,
+    cantidad_votos int NOT NULL,
+    cantidad_juegos_jugados int NOT NULL,
+    CONSTRAINT PK_GR02_USUARIO PRIMARY KEY (id_usuario)
+);
+
+create or replace function FN_GR02_PATRON_BUSQUEDA (Nro_usuario int)
+   returns GR02_PATRON_BUSQUEDA_USUARIOS as
+$$
+declare
+    cant_votos integer;
+    cant_juegos integer;
+begin
 
 
+       RETURN QUERY SELECT u.id_usuario,u.apellido,u.nombre,u.email,u.id_tipo_usuario,u.password, COUNT(*) INTO cant_votos,COUNT(*) INTO cant_juegos
+            FROM gr02_usuario u JOIN gr02_voto g02v on (u.id_usuario = g02v.id_usuario)
+                                JOIN gr02_juega g02j on (u.id_usuario = g02j.id_usuario)
+            WHERE u.id_usuario = Nro_usuario;
+end;
+$$
+language 'plpgsql';
 
+select FN_GR02_PATRON_BUSQUEDA(13);
