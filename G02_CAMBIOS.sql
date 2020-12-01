@@ -286,3 +286,64 @@ $$
 language 'plpgsql';
 
 select FN_GR02_PATRON_BUSQUEDA(13);
+
+
+--D. DEFINICIÓN DE VISTAS
+--1. COMENTARIOS_MES: Listar todos los comentarios realizados durante el último mes descartando aquellos juegos de la Categoría “Sin Categorías”.
+
+CREATE VIEW GR02_COMENTARIOS_MES AS
+SELECT com.*
+FROM gr02_comentario com
+WHERE (fecha_comentario >= NOW() - interval '1 month')
+    AND (com.id_usuario , com.id_juego) IN (
+    SELECT c.id_usuario, c.id_juego
+    FROM gr02_comenta c
+    where c.id_juego IN (
+        SELECT j.id_juego
+        FROM gr02_juego j
+        WHERE j.id_categoria IN (
+            SELECT id_categoria
+            FROM gr02_categoria
+            WHERE descripcion NOT LIKE '%sin categoria%'
+        )
+    )
+);
+
+--2. USUARIOS_COMENTADORES: Listar aquellos usuarios que han comentado TODOS los juegos durante el último año,
+-- teniendo en cuenta que sólo pueden comentar aquellos juegos que han jugado.
+
+CREATE VIEW GR02_USUARIOS_COMENTADORES AS
+SELECT u.*
+FROM gr02_usuario u
+where u.id_usuario IN(
+    SELECT com.id_usuario
+    FROM gr02_comentario c JOIN gr02_comenta com ON (c.id_usuario=com.id_usuario)
+                JOIN gr02_usuario u ON (u.id_usuario=com.id_usuario)
+                JOIN gr02_juega j on (u.id_usuario = j.id_usuario)
+    WHERE (com.fecha_ultimo_com >= NOW() - interval '1 year')
+    GROUP BY com.id_usuario
+    HAVING COUNT(com.id_juego)=COUNT(j.id_juego));
+
+--3. LOS_20_JUEGOS_MAS_PUNTUADOS: Realizar el ranking de los 20 juegos mejor puntuados por los Usuarios.
+--El ranking debe ser generado considerando el promedio del valor puntuado por los usuarios y que el juego hubiera sido calificado más de 5 veces.
+
+CREATE VIEW GR02_LOS_20_JUEGOS_MAS_PUNTUADOS AS
+SELECT j.id_juego, j.nombre_juego
+FROM gr02_juego j
+WHERE j.id_juego  IN (
+    SELECT id_juego
+    FROM gr02_voto
+    GROUP BY id_juego
+    HAVING COUNT(*)>= 5
+    ORDER BY AVG(valor_voto) desc)
+LIMIT 20;
+
+--4. LOS_10_JUEGOS_MAS_JUGADOS: Generar una vista con los 10 juegos más jugados.
+
+CREATE VIEW GR02_LOS_10_JUEGOS_MAS_JUGADOS AS
+SELECT id_juego, COUNT(id_usuario) as cantidaddejugadores
+FROM gr02_juega
+GROUP BY id_juego
+ORDER BY COUNT(id_juego) DESC
+LIMIT 10;
+
